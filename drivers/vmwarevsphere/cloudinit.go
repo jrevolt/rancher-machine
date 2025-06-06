@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/rancher/machine/libmachine/log"
 	"github.com/vmware/govmomi/object"
@@ -24,6 +25,14 @@ const (
 func (d *Driver) cloudInit(vm *object.VirtualMachine) error {
 	if d.CreationType == creationTypeLegacy {
 		return d.cloudInitGuestInfo(vm)
+	}
+
+	for _, x := range d.VAppProperties {
+		x = strings.TrimSpace(x)
+		if strings.HasPrefix(x, "guestinfo.userdata=") {
+			log.Info("Found guestinfo.userdata in VAppProperties, skipping cloud-init creation")
+			return nil
+		}
 	}
 
 	if err := d.createCloudInitIso(); err != nil {
